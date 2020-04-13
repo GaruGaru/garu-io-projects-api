@@ -1,36 +1,29 @@
 #![feature(proc_macro_hygiene, decl_macro)]
-
 extern crate rocket_contrib;
-
 #[macro_use]
 extern crate rocket;
+extern crate reqwest;
 
-use rocket_contrib::json::{Json};
-use serde::Serialize;
+mod github;
+mod models;
 
-#[derive(Serialize)]
-struct Repository {
-    name: String,
-    description: String,
-}
+use crate::models::{Repository};
+use crate::github::{Github, GithubClient};
+use rocket::State;
+use rocket_contrib::json::Json;
+use std::error::Error;
 
 #[get("/")]
-fn index() -> Json<Vec<Repository>> {
-    Json(vec![
-        Repository {
-            name: "test".to_string(),
-            description: "this is a really nice project".to_string(),
-        },
-        Repository
-        {
-            name: "test".to_string(),
-            description: "this is a really nice project".to_string(),
-        }
-    ])
+fn index(github: State<GithubClient>) -> Result<Json<Vec<Repository>>, Box<dyn Error>> {
+    return match github.projects() {
+        Ok(resp) => Ok(Json(resp)),
+        Err(e) => Err(e),
+    };
 }
 
 fn main() {
     rocket::ignite()
         .mount("/", routes![index])
+        .manage(github::new())
         .launch();
 }
