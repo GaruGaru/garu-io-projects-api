@@ -9,9 +9,9 @@ pub struct GithubClient {
 }
 
 pub fn new() -> GithubClient {
-    return GithubClient {
+    GithubClient {
         client: reqwest::blocking::Client::new(),
-    };
+    }
 }
 
 impl Github for GithubClient {
