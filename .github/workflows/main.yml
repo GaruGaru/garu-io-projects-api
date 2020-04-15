@@ -40,17 +40,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Docker Buildx (no push)
-        run: |
-          docker buildx build \
-            --platform ${{ steps.prepare.outputs.docker_platforms }} \
-            --output "type=image,push=false" \
-            --build-arg "VERSION=${{ steps.prepare.outputs.version }}" \
-            --build-arg "BUILD_DATE=${{ steps.prepare.outputs.build_date }}" \
-            --build-arg "VCS_REF=${GITHUB_SHA}" \
-            --tag "${{ steps.prepare.outputs.docker_image }}:${GITHUB_SHA}" \
-            --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
-            --file Dockerfile .
       - name: Docker Login
         if: success()
         env:
@@ -66,7 +55,7 @@ jobs:
             --build-arg "VERSION=${{ steps.prepare.outputs.version }}" \
             --build-arg "BUILD_DATE=${{ steps.prepare.outputs.build_date }}" \
             --build-arg "VCS_REF=${GITHUB_SHA}" \
-            --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
+            --tag "${{ steps.prepare.outputs.docker_image }}:${GITHUB_SHA}" \
             --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
             --file Dockerfile .
       - name: Clear
