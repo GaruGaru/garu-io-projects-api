@@ -37,7 +37,7 @@ impl Github for GithubClient {
                     Some(val) => val.to_string(),
                     None => "".to_string(),
                 },
-                language: match &r.description {
+                language: match &r.language {
                     Some(val) => val.to_string(),
                     None => "".to_string(),
                 },

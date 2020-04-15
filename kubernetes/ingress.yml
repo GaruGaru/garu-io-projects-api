@@ -6,14 +6,14 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: "nginx"
     nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/rewrite-target: /projects$1
 spec:
   rules:
 
     - host: api.garu.io
       http:
         paths:
-          - path: /projects/(.+)
+          - path: /projects(.*)
             backend:
               serviceName: garu-io-projects-api
               servicePort: 80
