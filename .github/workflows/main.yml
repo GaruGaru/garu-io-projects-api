@@ -17,7 +17,7 @@ jobs:
             echo ::set-output name=version::snapshot
           fi
           echo ::set-output name=build_date::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
-          echo ::set-output name=docker_platforms::linux/amd64,linux/arm/v7
+          echo ::set-output name=docker_platforms::linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/386
           echo ::set-output name=docker_image::${{ secrets.DOCKER_USERNAME }}/${{ github.event.repository.name }}
         # https://github.com/crazy-max/ghaction-docker-buildx
       - name: Set up Docker Buildx
@@ -47,8 +47,9 @@ jobs:
             --output "type=image,push=false" \
             --build-arg "VERSION=${{ steps.prepare.outputs.version }}" \
             --build-arg "BUILD_DATE=${{ steps.prepare.outputs.build_date }}" \
-            --build-arg "VCS_REF=${GITHUB_SHA::8}" \
-            --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
+            --tag "${{ steps.prepare.outputs.docker_image }}:${GITHUB_SHA}" \
+            --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
             --file Dockerfile .
       - name: Docker Login
         if: success()
@@ -64,10 +65,32 @@ jobs:
             --output "type=image,push=true" \
             --build-arg "VERSION=${{ steps.prepare.outputs.version }}" \
             --build-arg "BUILD_DATE=${{ steps.prepare.outputs.build_date }}" \
-            --build-arg "VCS_REF=${GITHUB_SHA::8}" \
+            --build-arg "VCS_REF=${GITHUB_SHA}" \
             --tag "${{ steps.prepare.outputs.docker_image }}:${{ steps.prepare.outputs.version }}" \
+            --tag "${{ steps.prepare.outputs.docker_image }}:latest" \
             --file Dockerfile .
       - name: Clear
         if: always()
         run: |
           rm -f ${HOME}/.docker/config.json
+      - name: deploy resources
+        uses: steebchen/kubectl@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+          KUBECTL_VERSION: "1.17"
+        with:
+          args: apply -f kubernetes/
+      - name: rollout images
+        uses: steebchen/kubectl@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+          KUBECTL_VERSION: "1.17"
+        with:
+          args: -n garu-io-projects-api set image deployment/api api=garugaru/garu-io-projects-api:${GITHUB_SHA}
+      - name: verify deployment
+        uses: steebchen/kubectl@master
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
+          KUBECTL_VERSION: "1.17"
+        with:
+          args: -n garu-io-projects-api rollout status -f kubernetes/deployment.yml

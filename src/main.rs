@@ -14,7 +14,6 @@ use rocket::State;
 use rocket_contrib::json::Json;
 use std::error::Error;
 use lru_time_cache::LruCache;
-use std::net::ToSocketAddrs;
 use std::sync::{Arc, Mutex};
 
 
@@ -35,7 +34,12 @@ impl SuperCache {
     }
 }
 
-#[get("/")]
+#[get("/healthz")]
+fn health() -> &'static str {
+    return "so far so good";
+}
+
+#[get("/projects")]
 fn projects(cache: State<Arc<Mutex<SuperCache>>>, github: State<GithubClient>) -> Result<Json<Vec<Repository>>, Box<dyn Error>> {
     let mut result = cache.lock().unwrap();
     return match result.get("projects") {
@@ -54,11 +58,10 @@ fn projects(cache: State<Arc<Mutex<SuperCache>>>, github: State<GithubClient>) -
 
 fn main() {
     let cache = SuperCache { cache: LruCache::<String, Vec<Repository>>::with_expiry_duration(::std::time::Duration::from_secs(3600)) };
-
     let shared_cache: Arc<Mutex<SuperCache>> = Arc::new(Mutex::new(cache));
 
     rocket::ignite()
-        .mount("/projects", routes![projects])
+        .mount("/", routes![projects, health])
         .manage(github::new())
         .manage(shared_cache)
         .launch();
