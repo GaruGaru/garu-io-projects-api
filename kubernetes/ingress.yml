@@ -18,3 +18,7 @@ spec:
               serviceName: garu-io-projects-api
               servicePort: 80
 
+  tls:
+    - hosts:
+        - api.garu.io
+      secretName: garu-io-api-cert
