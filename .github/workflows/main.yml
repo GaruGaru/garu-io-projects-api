@@ -62,24 +62,3 @@ jobs:
         if: always()
         run: |
           rm -f ${HOME}/.docker/config.json
-      - name: deploy resources
-        uses: steebchen/kubectl@master
-        env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-          KUBECTL_VERSION: "1.17"
-        with:
-          args: apply -f kubernetes/
-      - name: rollout images
-        uses: steebchen/kubectl@master
-        env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-          KUBECTL_VERSION: "1.17"
-        with:
-          args: -n garu-io-projects-api set image deployment/api api=garugaru/garu-io-projects-api:${GITHUB_SHA}
-      - name: verify deployment
-        uses: steebchen/kubectl@master
-        env:
-          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG_DATA }}
-          KUBECTL_VERSION: "1.17"
-        with:
-          args: -n garu-io-projects-api rollout status -f kubernetes/deployment.yml
