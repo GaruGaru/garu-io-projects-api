@@ -41,6 +41,7 @@ impl Github for GithubClient {
                     Some(val) => val.to_string(),
                     None => "".to_string(),
                 },
+                uri: r.url.to_string(),
             })
             .collect::<Vec<Repository>>();
 

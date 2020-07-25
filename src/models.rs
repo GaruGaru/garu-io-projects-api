@@ -4,6 +4,7 @@ pub struct Repository {
     pub name: String,
     pub description: String,
     pub language: String,
+    pub uri: String,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
