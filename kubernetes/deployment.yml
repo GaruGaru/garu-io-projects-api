@@ -25,7 +25,6 @@ spec:
 
         - name: api
           image: garugaru/garu-io-projects-api:latest
-
           ports:
             - containerPort: 8000
               name: api
