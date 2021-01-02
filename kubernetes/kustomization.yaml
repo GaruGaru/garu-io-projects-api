@@ -3,3 +3,7 @@ kind: Kustomization
 resources:
 - service.yml
 - deployment.yml
+images:
+- name: garugaru/garu-io-projects-api
+  newName: garugaru/garu-io-projects-api
+  newTag: 590b613f2f3facfd0b59dd1597f3de8bfc6fa747
