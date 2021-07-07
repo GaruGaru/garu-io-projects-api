@@ -6,4 +6,4 @@ resources:
 images:
 - name: garugaru/garu-io-projects-api
   newName: garugaru/garu-io-projects-api
-  newTag: 590b613f2f3facfd0b59dd1597f3de8bfc6fa747
+  newTag: 361e2f3226e3b67b55c0dbfd5e7f0e8a21d76bb9
