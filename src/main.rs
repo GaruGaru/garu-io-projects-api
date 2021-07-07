@@ -17,11 +17,11 @@ use lru_time_cache::LruCache;
 use std::sync::{Arc, Mutex};
 
 
-struct SuperCache {
+struct InMemoryCache {
     cache: LruCache<String, Vec<Repository>>
 }
 
-impl SuperCache {
+impl InMemoryCache {
     fn put(&mut self, key: &str, val: Vec<Repository>) {
         self.cache.insert(key.to_string(), val);
     }
@@ -40,7 +40,7 @@ fn health() -> &'static str {
 }
 
 #[get("/projects")]
-fn projects(cache: State<Arc<Mutex<SuperCache>>>, github: State<GithubClient>) -> Result<Json<Vec<Repository>>, Box<dyn Error>> {
+fn projects(cache: State<Arc<Mutex<InMemoryCache>>>, github: State<GithubClient>) -> Result<Json<Vec<Repository>>, Box<dyn Error>> {
     let mut result = cache.lock().unwrap();
     return match result.get("projects") {
         Some(res) => Ok(Json(res.to_vec())),
@@ -57,8 +57,8 @@ fn projects(cache: State<Arc<Mutex<SuperCache>>>, github: State<GithubClient>) -
 }
 
 fn main() {
-    let cache = SuperCache { cache: LruCache::<String, Vec<Repository>>::with_expiry_duration(::std::time::Duration::from_secs(3600)) };
-    let shared_cache: Arc<Mutex<SuperCache>> = Arc::new(Mutex::new(cache));
+    let cache = InMemoryCache { cache: LruCache::<String, Vec<Repository>>::with_expiry_duration(::std::time::Duration::from_secs(3600)) };
+    let shared_cache: Arc<Mutex<InMemoryCache>> = Arc::new(Mutex::new(cache));
 
     rocket::ignite()
         .mount("/", routes![projects, health])
