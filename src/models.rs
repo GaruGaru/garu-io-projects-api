@@ -1,3 +1,7 @@
+use rocket::http::ContentType;
+use rocket::response::content::Json;
+
+
 #[derive(Default, Debug, Clone, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Repository {

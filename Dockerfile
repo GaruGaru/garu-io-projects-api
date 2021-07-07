@@ -1,4 +1,4 @@
-FROM jdrouet/rust-nightly:stretch-slim AS builder
+FROM rust:slim-buster AS builder
 RUN apt-get update && apt-get install -y libssl-dev pkg-config
 WORKDIR /usr/src/
 COPY . .

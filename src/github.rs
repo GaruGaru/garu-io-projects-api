@@ -1,6 +1,7 @@
 use reqwest::blocking::Response;
 
 use crate::models::{Repository, Root};
+use std::error::Error;
 
 pub trait Github {
     fn projects(&self) -> Result<Vec<Repository>, Box<dyn std::error::Error>>;
@@ -17,7 +18,7 @@ pub fn new() -> GithubClient {
 }
 
 impl Github for GithubClient {
-    fn projects(&self) -> Result<Vec<Repository>, Box<dyn std::error::Error>> {
+    fn projects(&self) -> Result<Vec<Repository>,  Box<dyn Error>> {
         let host = "https://api.github.com";
         let user = "garugaru";
         let url = format!("{host}/users/{user}/repos?visibility=public&sort=created&affiliation=owner&direction=desc", host = host, user = user);
@@ -28,12 +29,12 @@ impl Github for GithubClient {
             .header("User-Agent", "GaruGaru")
             .send() {
             Ok(r) => r,
-            Err(err) => return Err(Box::new(err)),
+            Err(err) => { return Err(Box::new(err)) }
         };
 
         let repos_list = match response.json::<Vec<Root>>() {
             Ok(r) => {r}
-            Err(err) => return Err(Box::new(err)),
+            Err(err) => { return Err(Box::new(err)) }
         };
 
         let repos = repos_list

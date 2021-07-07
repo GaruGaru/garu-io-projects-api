@@ -1,29 +1,28 @@
-#![feature(proc_macro_hygiene, decl_macro)]
-extern crate rocket_contrib;
+extern crate reqwest;
 #[macro_use]
 extern crate rocket;
-extern crate reqwest;
-extern crate lru_time_cache;
+
+use std::error::Error;
+use std::sync::{Arc, Mutex};
+
+use rocket::{Rocket, State};
+use rocket::serde::{json::Json, Serialize};
+
+use crate::github::{Github, GithubClient};
+use crate::models::Repository;
+use pocketcache::cache::Cache;
+use pocketcache::time::Expiration;
 
 mod github;
 mod models;
 
-use crate::models::Repository;
-use crate::github::{Github, GithubClient};
-use rocket::State;
-use rocket_contrib::json::Json;
-use std::error::Error;
-use lru_time_cache::LruCache;
-use std::sync::{Arc, Mutex, PoisonError};
-
-
 struct InMemoryCache {
-    cache: LruCache<String, Vec<Repository>>
+    cache: Cache<Vec<Repository>>
 }
 
 impl InMemoryCache {
     fn put(&mut self, key: &str, val: Vec<Repository>) {
-        self.cache.insert(key.to_string(), val);
+        self.cache.set(key, val);
     }
 
     fn get(&mut self, key: &str) -> Option<Vec<Repository>> {
@@ -34,35 +33,61 @@ impl InMemoryCache {
     }
 }
 
+#[derive(Responder)]
+//#[response(bound = "T: Serialize")]
+enum Projects {
+    Ok(Json<Vec<Repository>>),
+    #[response(status = 500)]
+    Error(Json<String>),
+}
+
+
 #[get("/healthz")]
 fn health() -> &'static str {
     return "so far so good";
 }
 
 #[get("/projects")]
-fn projects(cache: State<Arc<Mutex<InMemoryCache>>>, github: State<GithubClient>) -> Result<Json<Vec<Repository>>, Box<dyn Error>> {
-    let mut result = cache.lock().unwrap_or_else(PoisonError::into_inner);
+fn projects(cache: &State<Arc<Mutex<InMemoryCache>>>, github: &State<GithubClient>) -> Projects {
+    let mut result = cache.lock().unwrap();
     return match result.get("projects") {
-        Some(res) => Ok(Json(res.to_vec())),
+        Some(res) => Projects::Ok(Json(res.to_vec())),
         None => {
             match github.projects() {
                 Ok(resp) => {
                     result.put("projects", resp.clone());
-                    Ok(Json(resp.clone()))
+                    return Projects::Ok(Json(resp.clone()));
                 }
-                Err(e) => Err(e),
+                Err(e) => Projects::Error(Json(String::from("e")))
             }
         }
     };
 }
+//
+//#[launch]
+//fn rocket()  -> _  {
+//    let cache = ;
+//    let shared_cache: Arc<Mutex<InMemoryCache>> = Arc::new(Mutex::new(cache));
+//
+//    return rocket::build()
+//        .mount("/", routes![projects, health])
+//        .manage(github::new())
+//        .manage(shared_cache);
+//}
+//
 
-fn main() {
-    let cache = InMemoryCache { cache: LruCache::<String, Vec<Repository>>::with_expiry_duration(::std::time::Duration::from_secs(3600)) };
-    let shared_cache: Arc<Mutex<InMemoryCache>> = Arc::new(Mutex::new(cache));
 
-    rocket::ignite()
+#[get("/")]
+fn index() -> &'static str {
+    "Hello, world!"
+}
+
+#[launch]
+fn rocket() -> _ {
+    let cache = InMemoryCache { cache: Cache::<Vec<Repository>>::new( Expiration::Minute(30)) };
+    let shared_cache = Arc::new(Mutex::new(cache));
+    rocket::build()
         .mount("/", routes![projects, health])
         .manage(github::new())
         .manage(shared_cache)
-        .launch();
 }
