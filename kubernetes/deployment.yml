@@ -28,7 +28,9 @@ spec:
           ports:
             - containerPort: 8000
               name: api
-
+          env:
+            - name: ROCKET_ADDRESS
+              value: 0.0.0.0
           readinessProbe:
             httpGet:
               path: /healthz

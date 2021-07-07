@@ -63,31 +63,16 @@ fn projects(cache: &State<Arc<Mutex<InMemoryCache>>>, github: &State<GithubClien
         }
     };
 }
-//
-//#[launch]
-//fn rocket()  -> _  {
-//    let cache = ;
-//    let shared_cache: Arc<Mutex<InMemoryCache>> = Arc::new(Mutex::new(cache));
-//
-//    return rocket::build()
-//        .mount("/", routes![projects, health])
-//        .manage(github::new())
-//        .manage(shared_cache);
-//}
-//
-
-
-#[get("/")]
-fn index() -> &'static str {
-    "Hello, world!"
-}
 
 #[launch]
 fn rocket() -> _ {
     let cache = InMemoryCache { cache: Cache::<Vec<Repository>>::new( Expiration::Minute(30)) };
     let shared_cache = Arc::new(Mutex::new(cache));
+
+    let conf =
     rocket::build()
         .mount("/", routes![projects, health])
         .manage(github::new())
         .manage(shared_cache)
+
 }
