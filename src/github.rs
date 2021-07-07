@@ -31,6 +31,7 @@ impl Github for GithubClient {
 
         let repos = response
             .iter()
+            .filter(|&i| !i.fork)
             .map(|r| Repository {
                 name: r.name.to_string(),
                 description: match &r.description {
