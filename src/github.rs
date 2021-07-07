@@ -1,3 +1,5 @@
+use reqwest::blocking::Response;
+
 use crate::models::{Repository, Root};
 
 pub trait Github {
@@ -20,16 +22,21 @@ impl Github for GithubClient {
         let user = "garugaru";
         let url = format!("{host}/users/{user}/repos?visibility=public&sort=created&affiliation=owner&direction=desc", host = host, user = user);
 
-        let response: Vec<Root> = self
+        let response = match self
             .client
             .get(&url.to_string())
             .header("User-Agent", "GaruGaru")
-            .send()
-            .unwrap()
-            .json::<Vec<Root>>()
-            .unwrap();
+            .send() {
+            Ok(r) => r,
+            Err(err) => return Err(Box::new(err)),
+        };
 
-        let repos = response
+        let repos_list = match response.json::<Vec<Root>>() {
+            Ok(r) => {r}
+            Err(err) => return Err(Box::new(err)),
+        };
+
+        let repos = repos_list
             .iter()
             .filter(|&i| !i.fork)
             .map(|r| Repository {

@@ -14,7 +14,7 @@ use rocket::State;
 use rocket_contrib::json::Json;
 use std::error::Error;
 use lru_time_cache::LruCache;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, PoisonError};
 
 
 struct InMemoryCache {
@@ -41,7 +41,7 @@ fn health() -> &'static str {
 
 #[get("/projects")]
 fn projects(cache: State<Arc<Mutex<InMemoryCache>>>, github: State<GithubClient>) -> Result<Json<Vec<Repository>>, Box<dyn Error>> {
-    let mut result = cache.lock().unwrap();
+    let mut result = cache.lock().unwrap_or_else(PoisonError::into_inner);
     return match result.get("projects") {
         Some(res) => Ok(Json(res.to_vec())),
         None => {
