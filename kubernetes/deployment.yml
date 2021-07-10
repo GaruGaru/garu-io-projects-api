@@ -31,6 +31,10 @@ spec:
           env:
             - name: ROCKET_ADDRESS
               value: 0.0.0.0
+
+            - name: OTEL_EXPORTER_JAEGER_AGENT_HOST
+              value: "jaeger-00-agent.jaeger-operator"
+
           readinessProbe:
             httpGet:
               path: /healthz
